@@ -16,12 +16,20 @@ Hip = 1.65;
 
 X2 = [];
 Y2 = [];
+Z2 = [];
+THEX2 = [];
+THEY2 = [];
+THEZ2 =[];
 
 for i= 1:600
     try
        temp = robotat_get_pose(robotat,2,'ZYX');
        X2(end+1) = temp(1);
        Y2(end+1) = temp(2);
+       Z2(end+1) = temp(3);
+       THEX2(end+1) = temp(4);
+       THEY2(end+1) = temp(5);
+       THEZ2(end+1) = temp(6);
     catch
         
     end
@@ -101,3 +109,13 @@ fprintf (['REFZ ',num2str(ref(3)),'     CALCZ ', num2str(Z1),'  Error ',num2str(
 %% Desconexion con el robotat
 robotat_disconnect(robotat);
 clear robotat;
+
+%% Graficando las posiciones en 3D
+
+OB3MAT = transl(OB3(1),OB3(2),OB3(3))*trotx(OB3(4))*troty(OB3(5))*trotz(OB3(6));
+OB4MAT = transl(OB4(1),OB4(2),OB4(3))*trotx(OB4(4))*troty(OB4(5))*trotz(OB4(6));
+
+hold on;
+trplot(OB3MAT,'frame','OB3','color','r','length',0.5);
+trplot(OB4MAT,'frame','OB4','color','b','length',0.5);
+hold off;
