@@ -6,7 +6,7 @@
 %% Conexion con el robotat
 clear all;
 
-robotat = robotat_connect('192.168.50.200')
+robotat = robotat_connect('192.168.50.200');
 ref = robotat_get_pose(robotat,1,'ZYX');
 Hip = 1.65;
 
@@ -17,9 +17,11 @@ Hip = 1.65;
 X2 = [];
 Y2 = [];
 Z2 = [];
-THEX2 = [];
-THEY2 = [];
-THEZ2 =[];
+% THEX2 = [];
+% THEY2 = [];
+% THEZ2 =[];
+
+AnimMat = [];
 
 for i= 1:600
     try
@@ -27,9 +29,11 @@ for i= 1:600
        X2(end+1) = temp(1);
        Y2(end+1) = temp(2);
        Z2(end+1) = temp(3);
-       THEX2(end+1) = temp(4);
-       THEY2(end+1) = temp(5);
-       THEZ2(end+1) = temp(6);
+%        THEX2(end+1) = temp(4);
+%        THEY2(end+1) = temp(5);
+%        THEZ2(end+1) = temp(6);
+       tempMat = transl(temp(1),temp(2),0);
+       AnimMat(:,:,:,end+1) = tempMat;
     catch
         
     end
@@ -112,4 +116,29 @@ clear robotat;
 
 %% Graficando las posiciones en 3D
 
-OB3MAT = transl(OB3(1),OB)
+OB3MAT = transl(OB3(1),OB3(2),OB3(3));%*trotx(rad2deg(OB3(4)))*troty(rad2deg(OB3(5)))*trotz(rad2deg(OB3(6)));
+OB4MAT = transl(OB4(1),OB4(2),OB4(3));%*trotx(rad2deg(OB4(4)))*troty(rad2deg(OB4(5)))*trotz(rad2deg(OB4(6)));
+OB2MAT1 = transl(X2(10),Y2(10),Z2(10));%*trotx(rad2deg(THEX2(10)))*troty(rad2deg(THEY2(10)))*trotz(rad2deg(THEZ2(10)));
+OB2MAT2 = transl(X2(150),Y2(150),Z2(150));%*trotx(rad2deg(THEX2(150)))*troty(rad2deg(THEY2(150)))*trotz(rad2deg(THEZ2(150)));
+OB2MAT3 = transl(X2(300),Y2(300),Z2(300));%*trotx(rad2deg(THEX2(300)))*troty(rad2deg(THEY2(300)))*trotz(rad2deg(THEZ2(300)));
+OB2MAT4 = transl(X2(450),Y2(450),Z2(450));%*trotx(rad2deg(THEX2(450)))*troty(rad2deg(THEY2(450)))*trotz(rad2deg(THEZ2(450)));
+
+OB1MAT = transl(X1,Y1,Z1);
+
+A = [-2,2,-2.5,2.5,-0.1,2];
+
+
+figure(2);
+hold on;
+grid on;
+axis(A);
+labels(['Eje X','Eje Y','Eje Z');
+trplot(OB3MAT,'frame','OB3','color','r','length',0.3,'text_opts', {'FontSize', 8});
+trplot(OB4MAT,'frame','OB4','color','b','length',0.3,'text_opts', {'FontSize', 8});
+trplot(OB1MAT,'frame','OB1','color',"#77AC30",'length',0,'text_opts', {'FontSize', 8});
+plot(X2,Y2);
+for i=2:size(AnimMat,4)-1
+    tranimate(AnimMat(:,:,:,i-1),AnimMat(:,:,:,i),'frame','OB2','fps',60,'nsteps',1,'cleanup','length',0.3,'color',"#D95319");
+end
+trplot(AnimMat(:,:,:,end),'frame','OB2','length',0.3,'color',"#D95319")
+hold off;
