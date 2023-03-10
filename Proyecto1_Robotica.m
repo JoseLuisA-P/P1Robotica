@@ -17,9 +17,9 @@ Hip = 1.65;
 X2 = [];
 Y2 = [];
 Z2 = [];
-% THEX2 = [];
-% THEY2 = [];
-% THEZ2 =[];
+THEX2 = [];
+THEY2 = [];
+THEZ2 =[];
 
 AnimMat = [];
 
@@ -29,10 +29,10 @@ for i= 1:600
        X2(end+1) = temp(1);
        Y2(end+1) = temp(2);
        Z2(end+1) = temp(3);
-%        THEX2(end+1) = temp(4);
-%        THEY2(end+1) = temp(5);
-%        THEZ2(end+1) = temp(6);
-       tempMat = transl(temp(1),temp(2),0);
+       THEX2(end+1) = rad2deg(temp(6));
+       THEY2(end+1) = rad2deg(temp(5));
+       THEZ2(end+1) = rad2deg(temp(4));
+       tempMat = transl(temp(1),temp(2),0);%*trotx(THEX2)*troty(THEY2)*trotz(THEZ2);
        AnimMat(:,:,:,end+1) = tempMat;
     catch
         
@@ -49,6 +49,7 @@ X2mid = (X2max + X2min)/2;
 Y2mid = (Y2max + Y2min)/2;
 
 %Se plotea la trayectoria para ver si es lo esperado.
+figure(1);
 hold on;
 plot(X2,Y2);
 axis([X2min X2max Y2min Y2max]);
@@ -100,28 +101,14 @@ else
     fprintf('Todas las medidas se ven en orden');
 end
 
-%% Comparando el error entre las mediciones
-
-ERRX = abs((ref(1)-X1)/ref(1))*100;
-ERRY = abs((ref(2)-Y1)/ref(2))*100;
-ERRZ = abs((ref(3)-Z1)/ref(3))*100;
-
-fprintf (['\nREFX ',num2str(ref(1)),'     CALCX ', num2str(X1), '  Error ',num2str(ERRX),'\n']);
-fprintf (['REFY ',num2str(ref(2)),'     CALCY ', num2str(Y1),'  Error ',num2str(ERRY),'\n']);
-fprintf (['REFZ ',num2str(ref(3)),'     CALCZ ', num2str(Z1),'  Error ',num2str(ERRZ),'\n']);
-
 %% Desconexion con el robotat
 robotat_disconnect(robotat);
 clear robotat;
 
 %% Graficando las posiciones en 3D
 
-OB3MAT = transl(OB3(1),OB3(2),OB3(3));%*trotx(rad2deg(OB3(4)))*troty(rad2deg(OB3(5)))*trotz(rad2deg(OB3(6)));
-OB4MAT = transl(OB4(1),OB4(2),OB4(3));%*trotx(rad2deg(OB4(4)))*troty(rad2deg(OB4(5)))*trotz(rad2deg(OB4(6)));
-OB2MAT1 = transl(X2(10),Y2(10),Z2(10));%*trotx(rad2deg(THEX2(10)))*troty(rad2deg(THEY2(10)))*trotz(rad2deg(THEZ2(10)));
-OB2MAT2 = transl(X2(150),Y2(150),Z2(150));%*trotx(rad2deg(THEX2(150)))*troty(rad2deg(THEY2(150)))*trotz(rad2deg(THEZ2(150)));
-OB2MAT3 = transl(X2(300),Y2(300),Z2(300));%*trotx(rad2deg(THEX2(300)))*troty(rad2deg(THEY2(300)))*trotz(rad2deg(THEZ2(300)));
-OB2MAT4 = transl(X2(450),Y2(450),Z2(450));%*trotx(rad2deg(THEX2(450)))*troty(rad2deg(THEY2(450)))*trotz(rad2deg(THEZ2(450)));
+OB3MAT = transl(OB3(1),OB3(2),OB3(3))*trotx(rad2deg(OB3(6)))*troty(rad2deg(OB3(5)))*trotz(rad2deg(OB3(4)));
+OB4MAT = transl(OB4(1),OB4(2),OB4(3))*trotx(rad2deg(OB4(6)))*troty(rad2deg(OB4(5)))*trotz(rad2deg(OB4(4)));
 
 OB1MAT = transl(X1,Y1,Z1);
 
@@ -139,8 +126,52 @@ trplot(OB3MAT,'frame','OB3','color','r','length',0.3,'text_opts', {'FontSize', 8
 trplot(OB4MAT,'frame','OB4','color','b','length',0.3,'text_opts', {'FontSize', 8});
 trplot(OB1MAT,'frame','OB1','color',"#77AC30",'length',0,'text_opts', {'FontSize', 8});
 plot(X2,Y2);
-for i=2:size(AnimMat,4)-1
+for i=2:size(AnimMat,4)
+    tranimate(AnimMat(:,:,:,i-1),AnimMat(:,:,:,i),'frame','OB2','fps',10,'nsteps',1,'cleanup','length',0.3,'color',"#D95319");
+end
+trplot(AnimMat(:,:,:,end),'frame','OB2','length',0.3,'color',"#D95319");
+hold off;
+
+%% Comparando el error entre las mediciones
+
+ERRX = abs((ref(1)-X1)/ref(1))*100;
+ERRY = abs((ref(2)-Y1)/ref(2))*100;
+ERRZ = abs((ref(3)-Z1)/ref(3))*100;
+
+fprintf (['\nREFX ',num2str(ref(1)),'     CALCX ', num2str(X1), '  Error ',num2str(ERRX),'\n']);
+fprintf (['REFY ',num2str(ref(2)),'     CALCY ', num2str(Y1),'  Error ',num2str(ERRY),'\n']);
+fprintf (['REFZ ',num2str(ref(3)),'     CALCZ ', num2str(Z1),'  Error ',num2str(ERRZ),'\n']);
+
+%% Guardando las variables
+save('variablesMedidas.mat','OB3MAT','OB4MAT','OB1MAT','AnimMat')
+
+%% Para solo plotear el resultado final obtenido en el laboratorio
+% Solo correr esta seccion.
+
+load('variablesMedidas.mat','OB3MAT','OB4MAT','OB1MAT','AnimMat');
+A = [-2,2,-2.5,2.5,-0.1,2];
+
+X = [];
+Y = [];
+
+for i=2:size(AnimMat,4)
+    X(end+1) =  AnimMat(1,4,1,i);
+    Y(end+1) =  AnimMat(2,4,1,i);
+end
+
+figure(1);
+hold on;
+grid on;
+axis(A);
+xlabel('Eje X');
+ylabel('Eje Y');
+zlabel('Eje Z');
+trplot(OB3MAT,'frame','OB3','color','r','length',0.3,'text_opts', {'FontSize', 8});
+trplot(OB4MAT,'frame','OB4','color','b','length',0.3,'text_opts', {'FontSize', 8});
+trplot(OB1MAT,'frame','OB1','color',"#77AC30",'length',0,'text_opts', {'FontSize', 8});
+plot(X,Y);
+for i=2:size(AnimMat,4)
     tranimate(AnimMat(:,:,:,i-1),AnimMat(:,:,:,i),'frame','OB2','fps',60,'nsteps',1,'cleanup','length',0.3,'color',"#D95319");
 end
-trplot(AnimMat(:,:,:,end),'frame','OB2','length',0.3,'color',"#D95319")
+trplot(AnimMat(:,:,:,end),'frame','OB2','length',0.3,'color',"#D95319");
 hold off;
